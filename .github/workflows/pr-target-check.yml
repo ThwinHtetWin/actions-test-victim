@@ -1,0 +1,26 @@
+name: PR Target Check
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  safe-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Base context info
+        run: |
+          echo "This runs in BASE repo context"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Head repo: ${{ github.event.pull_request.head.repo.full_name }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+      - name: Check secret availability
+        env:
+          HAS_SECRET: ${{ secrets.VICTIM_SECRET != '' }}
+        run: |
+          echo "Secret available in pull_request_target context: $HAS_SECRET"
+          echo "NOTE: This workflow does NOT checkout fork code (safe pattern)"
