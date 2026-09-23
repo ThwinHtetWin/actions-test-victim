@@ -1,0 +1,30 @@
+name: Cache Test
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  cache-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache test data
+        uses: actions/cache@v4
+        with:
+          path: ~/.test-cache
+          key: test-cache-${{ github.ref }}-${{ hashFiles('**/*.txt') }}
+          restore-keys: |
+            test-cache-${{ github.ref }}-
+            test-cache-refs/heads/main-
+      - name: Show cache contents
+        run: |
+          echo "=== Cache contents ==="
+          ls -la ~/.test-cache/ 2>/dev/null || echo "No cache found"
+          cat ~/.test-cache/data.txt 2>/dev/null || echo "No data.txt in cache"
+      - name: Write to cache
+        run: |
+          mkdir -p ~/.test-cache
+          echo "Written by ${{ github.actor }} from ${{ github.repository }} ref=${{ github.ref }} sha=${{ github.sha }}" > ~/.test-cache/data.txt
+          echo "Cache written"
