@@ -1,0 +1,26 @@
+name: OIDC Token Test
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  oidc-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request OIDC token
+        run: |
+          echo "Requesting OIDC token..."
+          OIDC_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://example.com" | jq -r '.value')
+          if [ "$OIDC_TOKEN" != "null" ] && [ -n "$OIDC_TOKEN" ]; then
+            echo "Got OIDC token, decoding claims..."
+            echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '.' || echo "Failed to decode"
+          else
+            echo "No OIDC token available"
+            echo "REQUEST_URL available: $([ -n \"$ACTIONS_ID_TOKEN_REQUEST_URL\" ] && echo yes || echo no)"
+            echo "REQUEST_TOKEN available: $([ -n \"$ACTIONS_ID_TOKEN_REQUEST_TOKEN\" ] && echo yes || echo no)"
+          fi
